@@ -18,18 +18,20 @@
 
 (defn get-health
   [request]
-  (println (keys request))
-  (println (keys (:components request)))
-  {:status 200
+  {:status  200
    :headers {}
-   :body {:healthy true}})
+   :body    {:healthy true}})
 
 (defn on-deploy-service
   [request]
-  {:status 200
+  {:status  200
    :headers {}
-   :body {:name "hello-world"
-          :git "git@github.com:formicarium/config-server-example"}})
+   :body    {:name                  "config-server-example"
+             :build-tool            "lein"
+             :git                   "git@github.com:formicarium/config-server-example"
+             :ports                 [8081]
+             :environment-variables {"GIT_REPO" "git@github.com:formicarium/config-server-example"
+                                     "API_KEY"  "apoks"}}})
 
 (def routes
   `[[["/" ^:interceptors [(body-params/body-params) externalize-json] {:get [:get-health get-health]}
@@ -69,7 +71,7 @@
               ;;  This can also be your own chain provider/server-fn -- http://pedestal.io/reference/architecture-overview#_chain_provider
               ::http/type              :jetty
               ;;::http/host "localhost"
-              ::http/port              8080
+              ::http/port              8081
               ;; Options to pass to the container (Jetty)
               ::http/container-options {:h2c? true
                                         :h2?  false
@@ -82,6 +84,6 @@
   [env]
   (case env
     :prod (merge service {:env :prod})
-    :dev  (merge service {:env :dev})
+    :dev (merge service {:env :dev})
     :test (merge service {:env :test})))
 
