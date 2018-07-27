@@ -27,6 +27,7 @@
   {:status  200
    :headers {}
    :body    {:name                  "config-server-example"
+             :host                  "randomsvc.formicarium.host"
              :build-tool            "lein"
              :git                   "git@github.com:formicarium/config-server-example"
              :ports                 [8081]
