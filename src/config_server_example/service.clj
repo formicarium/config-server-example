@@ -26,13 +26,7 @@
   [request]
   {:status  200
    :headers {}
-   :body    {:name                  "config-server-example"
-             :host                  "randomsvc.formicarium.host"
-             :build-tool            "lein"
-             :git                   "git@github.com:formicarium/config-server-example"
-             :ports                 [8081]
-             :environment-variables {"GIT_REPO" "git@github.com:formicarium/config-server-example"
-                                     "API_KEY"  "apoks"}}})
+   :body    (:json-params request)})
 
 (def routes
   `[[["/" ^:interceptors [(body-params/body-params) externalize-json] {:get [:get-health get-health]}
