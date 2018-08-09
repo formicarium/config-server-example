@@ -20,7 +20,7 @@
   [request]
   {:status  200
    :headers {}
-   :body    {:healthy true}})
+   :body    {:healthy "foda-se man!!!"}})
 
 (defn on-deploy-service
   [request]
