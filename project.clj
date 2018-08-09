@@ -24,7 +24,7 @@
   :repositories  [["central"  {:url "https://repo1.maven.org/maven2/" :snapshots false}]
                   ["clojars"  {:url "https://clojars.org/repo/"}]]
 
-  :profiles {:dev {:aliases {"run-dev" ["trampoline" "run" "-m" "config-server-example.server/run-dev"]}
+  :profiles {:dev {:aliases {"run-dev" ["run" "-m" "config-server-example.server/run-dev"]}
                    :plugins [[lein-midje "3.2.1"]]
                    :dependencies [[io.pedestal/pedestal.service-tools "0.5.4"]
                                   [midje "1.9.1"]
