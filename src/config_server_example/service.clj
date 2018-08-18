@@ -22,11 +22,85 @@
    :headers {}
    :body    {:healthy "foda-se man5!!!"}})
 
+(defn svc->nu-env-config [{:keys [service-name transactor-host transactor-port]}]
+  (cheshire.core/generate-string {:environment "local"
+                                  :zk_primary "zookeeper"
+                                  :router "linear-search"
+                                  :kafka_topics {:absolved-delinquent {:topic "ABSOLVED-DELINQUENT"
+                                                                       :direction "producer"}}
+                                  :datomic_uri (str "datomic:dev://" transactor-host ":" transactor-port "/" service-name)}))
+
 (defn on-deploy-service
   [request]
   {:status  200
    :headers {}
-   :body    (:json-params request)})
+   :body
+   (let [{:keys [name] :as params} (:json-params request)
+         aws-secret-key (System/getenv "AWS_SECRET_KEY"); some account with read access to the keysets to boot the svc
+         aws-access-key-id (System/getenv "AWS_ACCESS_KEY_ID")]
+     {:name       name
+      :containers [{:name      "transactor"
+                    :image     "quay.io/nubank/nudev-transactor:7edadc4"
+                    :syncable? false
+                    :env       {:TRANSACTOR_HOST     "transactor"
+                                :TRANSACTOR_PORT     "4334"
+                                :TRANSACTOR_ALT_HOST "transactor"}}
+                   {:name      "zookeeper"
+                    :image     "quay.io/nubank/nudev-exhibitor"
+                    :syncable? false
+                    :env       {}}
+                   {:name      "kafka"
+                    :image     "quay.io/nubank/nudev-kafka"
+                    :syncable? false
+                    :env       {}}
+                   {:name      "dynamodb"
+                    :image     "quay.io/nubank/nudev-dynamodb"
+                    :syncable? false
+                    :env       {}}
+                   {:name      name
+                    :image     (str "quay.io/nubank/nu-" name)
+                    :syncable? true
+                    :env       {:NU_ENV_CONFIG  (svc->nu-env-config {:service-name name
+                                                                     :transactor-host "transactor"
+                                                                     :transactor-port "4334"})
+                                :AWS_ACCESS_KEY_ID aws-access-key-id
+                                :AWS_SECRET_KEY aws-secret-key}}]
+      :interfaces [{:name      "transactor-1"
+                    :port      "4334"
+                    :container "transactor"
+                    :type      :tcp}
+                   {:name      "transactor-2"
+                    :port      "4335"
+                    :container "transactor"
+                    :type      :tcp}
+                   {:name      "transactor-3"
+                    :port      "4336"
+                    :container "transactor"
+                    :type      :tcp}
+                   {:name      "zookeeper-client"
+                    :port      "2181"
+                    :container "zookeeper"
+                    :type      :tcp}
+                   {:name      "zookeeper-follower"
+                    :port      "2888"
+                    :container "zookeeper"
+                    :type      :tcp}
+                   {:name      "zookeeper-leader"
+                    :port      "3888"
+                    :container "zookeeper"
+                    :type      :tcp}
+                   {:name      "zookeeper-exhibitor"
+                    :port      "3888"
+                    :container "zookeeper"
+                    :type      :tcp}
+                   {:name      "kafka-client"
+                    :port      "9092"
+                    :container "kafka"
+                    :type      :tcp}
+                   {:name      "dynamodb-client"
+                    :port      "8000"
+                    :container "dynamodb"
+                    :type      :tcp}]})})
 
 (def routes
   `[[["/" ^:interceptors [(body-params/body-params) externalize-json] {:get [:get-health get-health]}
